@@ -2,7 +2,7 @@
   "name": "Nawigator Rzeczywistości",
   "short_name": "Nawigator",
   "description": "Narzędzie Transurfingu dla kierowców zawodowych.",
-  "start_url": "./https://makaron44.github.io/Nawigator-Rzeczywisto-ci-/",
+  "start_url": "./index.html",
   "display": "standalone",
   "background_color": "#0f172a",
   "theme_color": "#0f172a",
@@ -20,4 +20,3 @@
     }
   ]
 }
-
