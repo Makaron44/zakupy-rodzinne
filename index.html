@@ -4,67 +4,69 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="theme-color" content="#0f172a">
     <title>Nawigator Rzeczywistości</title>
     <link rel="manifest" href="manifest.json">
     
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    
+    <script crossorigin src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+    <script crossorigin src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+    <script crossorigin src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.5/babel.min.js"></script>
 
     <style>
         body { font-family: 'Inter', sans-serif; background-color: #0f172a; color: #f8fafc; -webkit-tap-highlight-color: transparent; overscroll-behavior-y: none; }
         .glass { background: rgba(30, 41, 59, 0.7); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.08); box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); }
-        .safe-bottom { padding-bottom: calc(5rem + env(safe-area-inset-bottom)); }
+        .safe-bottom { padding-bottom: calc(6rem + env(safe-area-inset-bottom)); }
         .safe-top { padding-top: max(1rem, env(safe-area-inset-top)); }
         .animate-slide-up { animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1); }
         @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
         input, textarea, select { font-size: 16px !important; }
-        #debug-error { display: none; padding: 20px; color: #f87171; background: #1a0f0f; border: 1px solid red; margin: 20px; border-radius: 10px; font-family: monospace; white-space: pre-wrap; }
+        
+        /* Ekran ładowania */
+        #loading-screen { position: fixed; inset: 0; background: #0f172a; z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; transition: opacity 0.5s; }
+        .spinner { width: 40px; height: 40px; border: 4px solid rgba(255,255,255,0.1); border-left-color: #34d399; border-radius: 50%; animation: spin 1s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        
+        #debug-error { display: none; padding: 20px; color: #f87171; background: #1a0f0f; border: 1px solid red; margin: 20px; border-radius: 10px; font-family: monospace; white-space: pre-wrap; z-index: 10000; position: relative; }
     </style>
 </head>
 <body>
-    <div id="root">
-        <div style="height: 100vh; display: flex; align-items: center; justify-content: center; color: #475569;">
-            Ładowanie Nawigatora...
-        </div>
+    <div id="loading-screen">
+        <div class="spinner"></div>
+        <p style="margin-top: 15px; color: #64748b; font-size: 12px; letter-spacing: 1px;">ŁADOWANIE SYSTEMU...</p>
     </div>
-    
+
+    <div id="root"></div>
     <div id="debug-error"></div>
 
     <script>
-        window.onerror = function(message, source, lineno, colno, error) {
+        window.onerror = function(msg, url, line, col, error) {
+            document.getElementById('loading-screen').style.display = 'none';
             const errDiv = document.getElementById('debug-error');
             errDiv.style.display = 'block';
-            errDiv.innerText = "BŁĄD KRYTYCZNY:\n" + message + "\nLinia: " + lineno;
-            document.getElementById('root').style.display = 'none';
+            errDiv.innerText = "BŁĄD:\n" + msg + "\n\nSpróbuj odświeżyć stronę.";
+            return false;
         };
     </script>
 
     <script type="text/babel">
-        // --- 1. ZMIENNE POMOCNICZE ---
+        // Sprawdzenie czy biblioteki się załadowały
+        if (!window.React || !window.ReactDOM) {
+            throw new Error("Biblioteka React nie została załadowana. Sprawdź połączenie z internetem.");
+        }
+
         const { useState, useEffect, useMemo } = React;
         const { createRoot } = ReactDOM;
 
-        // Bezpieczne parsowanie JSON (żeby nie wywalało białego ekranu przy błędzie danych)
-        const safeParse = (key, fallback) => {
-            try {
-                const item = localStorage.getItem(key);
-                return item ? JSON.parse(item) : fallback;
-            } catch (e) {
-                console.error("Błąd odczytu danych dla:", key, e);
-                return fallback;
-            }
-        };
-
-        // Rejestracja SW
+        // --- SERVICE WORKER ---
         if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('./sw.js').catch(err => console.log('SW Fail:', err));
+            navigator.serviceWorker.register('./sw.js').catch(() => {});
         }
 
-        // --- 2. IKONY ---
+        // --- IKONY ---
         const Icon = ({ path, color = "currentColor", size = 24, className = "" }) => (
             <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
                 {path}
@@ -86,53 +88,35 @@
             Key: <path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4" />
         };
 
+        // --- WYKRES ---
         const SimpleChart = ({ data }) => {
             if (!data || data.length === 0) return <div className="h-full flex items-center justify-center text-slate-500 text-xs">Brak danych</div>;
-            
-            const height = 150;
-            const width = 300; 
-            const padding = 20;
-            const maxVal = 5;
-            
+            const height = 150, width = 300, padding = 20, maxVal = 5;
             const points = data.map((d, i) => {
                 const x = padding + (i / (data.length - 1 || 1)) * (width - 2 * padding);
                 const y = height - padding - (d.energy / maxVal) * (height - 2 * padding);
                 return `${x},${y}`;
             }).join(" ");
-
-            const lastX = width - padding;
-            const bottomY = height - padding;
-            const areaPoints = `${points} ${lastX},${bottomY} ${padding},${bottomY}`;
-
+            const areaPoints = `${points} ${width-padding},${height-padding} ${padding},${height-padding}`;
             return (
                 <div className="w-full h-full flex flex-col">
                     <svg viewBox={`0 0 ${width} ${height}`} className="w-full h-full overflow-visible">
-                        <line x1={padding} y1={bottomY} x2={width-padding} y2={bottomY} stroke="#334155" strokeWidth="1" />
-                        <line x1={padding} y1={padding} x2={padding} y2={bottomY} stroke="#334155" strokeWidth="1" />
-                        <defs>
-                            <linearGradient id="chartGradient" x1="0" y1="0" x2="0" y2="1">
-                                <stop offset="0%" stopColor="#a855f7" stopOpacity="0.4" />
-                                <stop offset="100%" stopColor="#a855f7" stopOpacity="0" />
-                            </linearGradient>
-                        </defs>
-                        <polygon points={areaPoints} fill="url(#chartGradient)" />
+                        <line x1={padding} y1={height-padding} x2={width-padding} y2={height-padding} stroke="#334155" strokeWidth="1" />
+                        <line x1={padding} y1={padding} x2={padding} y2={height-padding} stroke="#334155" strokeWidth="1" />
+                        <defs><linearGradient id="g" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="#a855f7" stopOpacity="0.4"/><stop offset="100%" stopColor="#a855f7" stopOpacity="0"/></linearGradient></defs>
+                        <polygon points={areaPoints} fill="url(#g)" />
                         <polyline points={points} fill="none" stroke="#a855f7" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
                         {data.map((d, i) => {
                             const x = padding + (i / (data.length - 1 || 1)) * (width - 2 * padding);
                             const y = height - padding - (d.energy / maxVal) * (height - 2 * padding);
-                            return (
-                                <g key={i}>
-                                    <circle cx={x} cy={y} r="3" fill="#fff" />
-                                    <text x={x} y={height} fill="#94a3b8" fontSize="10" textAnchor="middle">{d.date.split('.')[0]}</text>
-                                </g>
-                            )
+                            return <g key={i}><circle cx={x} cy={y} r="3" fill="#fff" /><text x={x} y={height} fill="#94a3b8" fontSize="10" textAnchor="middle">{d.date.split('.')[0]}</text></g>
                         })}
                     </svg>
                 </div>
             );
         };
 
-        // --- 3. GŁÓWNA APLIKACJA ---
+        // --- APLIKACJA ---
         const Kategoria = { SOS: "🚨 SOS", SLAJD: "🎥 SLAJD", ZASADA: "🧠 ZASADA" };
         const HOOK_OPTIONS = ['Aplikacja Paliwowa', 'Szef', 'Korek', 'Lęk', 'Inny Kierowca', 'Zmęczenie', 'Inne'];
         const INITIAL_PERELKI = [
@@ -140,13 +124,18 @@
             { id: "2", kategoria: Kategoria.SLAJD, tytul: "Bezpieczna Trasa", trescPorady: "Widzisz zielone światła i pustą drogę.", afirmacjaSkrot: "Płynę w Prądzie Wariantów." }
         ];
 
+        // Bezpieczny odczyt z localStorage
+        const safeJSON = (key, fallback) => {
+            try { return JSON.parse(localStorage.getItem(key)) || fallback; } 
+            catch { return fallback; }
+        };
+
         function App() {
-            // State z bezpiecznym parsowaniem
             const [activeTab, setActiveTab] = useState('dashboard');
             const [apiKey, setApiKey] = useState(() => localStorage.getItem('nr_api_key') || "");
-            const [journal, setJournal] = useState(() => safeParse('nr_journal', []));
+            const [journal, setJournal] = useState(() => safeJSON('nr_journal', []));
             const [amalgam, setAmalgam] = useState(() => localStorage.getItem('nr_amalgam') || "");
-            const [pearls, setPearls] = useState(() => safeParse('nr_pearls', INITIAL_PERELKI));
+            const [pearls, setPearls] = useState(() => safeJSON('nr_pearls', INITIAL_PERELKI));
             
             const [isAddingJournal, setIsAddingJournal] = useState(false);
             const [isAddingPearl, setIsAddingPearl] = useState(false);
@@ -154,19 +143,27 @@
             const [challenge, setChallenge] = useState("");
             const [journalSearch, setJournalSearch] = useState("");
             
+            // Form states
             const [newPearlCategory, setNewPearlCategory] = useState(Kategoria.ZASADA);
             const [newPearlTytul, setNewPearlTytul] = useState("");
             const [newPearlTresc, setNewPearlTresc] = useState("");
             const [newPearlAfirmacja, setNewPearlAfirmacja] = useState("");
 
+            // Zapisywanie
             useEffect(() => { localStorage.setItem('nr_journal', JSON.stringify(journal)); }, [journal]);
             useEffect(() => { localStorage.setItem('nr_pearls', JSON.stringify(pearls)); }, [pearls]);
             useEffect(() => { localStorage.setItem('nr_amalgam', amalgam); }, [amalgam]);
             useEffect(() => { localStorage.setItem('nr_api_key', apiKey); }, [apiKey]);
+            
+            // Ukrycie loadera po starcie aplikacji
+            useEffect(() => {
+                const loader = document.getElementById('loading-screen');
+                if(loader) loader.style.opacity = '0';
+                setTimeout(() => { if(loader) loader.style.display = 'none'; }, 500);
+            }, []);
 
             const handleDeletePearl = (e, id) => {
-                e.preventDefault();
-                e.stopPropagation();
+                e.preventDefault(); e.stopPropagation();
                 if (window.confirm('Usunąć tę perełkę trwale?')) {
                     setPearls(prev => prev.filter(p => String(p.id) !== String(id)));
                 }
@@ -184,12 +181,9 @@
                 e.preventDefault();
                 const fd = new FormData(e.target);
                 const entry = {
-                    id: String(Date.now()),
-                    timestamp: Date.now(),
-                    energia: Number(fd.get('energia')),
-                    haczyk: fd.get('haczyk'),
-                    reakcja: fd.get('reakcja'),
-                    wniosek: fd.get('wniosek')
+                    id: String(Date.now()), timestamp: Date.now(),
+                    energia: Number(fd.get('energia')), haczyk: fd.get('haczyk'),
+                    reakcja: fd.get('reakcja'), wniosek: fd.get('wniosek')
                 };
                 setJournal([entry, ...journal]);
                 setIsAddingJournal(false);
@@ -197,13 +191,13 @@
 
             const handleAmalgam = async () => {
                 if (!challenge) return;
-                if (!apiKey || apiKey.length < 10) { alert("Wprowadź poprawny klucz API Gemini w ustawieniach!"); setActiveTab('settings'); return; }
+                if (!apiKey || apiKey.length < 5) { alert("Wprowadź klucz API w ustawieniach!"); setActiveTab('settings'); return; }
                 setIsBusy(true);
                 try {
                     const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ contents: [{ parts: [{ text: `Jesteś Vadimem Zelandem. Krótko, max 2 zdania. Stwórz Amalgamat dla kierowcy na problem: "${challenge}".` }] }] })
+                        body: JSON.stringify({ contents: [{ parts: [{ text: `Jesteś Vadimem Zelandem. Stwórz krótki Amalgamat (1 zdanie) na problem: "${challenge}".` }] }] })
                     });
                     if(!response.ok) throw new Error("Błąd API: " + response.status);
                     const data = await response.json();
@@ -234,8 +228,8 @@
             };
 
             return (
-                <div className="min-h-screen max-w-lg mx-auto flex flex-col safe-top relative pb-20">
-                    <header className="px-6 py-4 flex justify-between items-center sticky top-0 z-30 backdrop-blur-sm">
+                <div className="min-h-screen max-w-lg mx-auto flex flex-col safe-top relative pb-24">
+                    <header className="px-6 py-4 flex justify-between items-center sticky top-0 z-30 backdrop-blur-md bg-[#0f172a]/70">
                         <div>
                             <h1 className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-emerald-400">Nawigator</h1>
                             <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest italic">Reality Transurfing</p>
@@ -250,17 +244,17 @@
                             <div className="space-y-6 animate-slide-up">
                                 <section className="space-y-3">
                                     <h2 className="text-sm font-bold text-emerald-400 flex items-center gap-2 px-1">Twoje Nastawienie</h2>
-                                    <div className="glass rounded-3xl p-6 bg-gradient-to-br from-emerald-900/20 to-slate-900 border-emerald-500/20 shadow-lg shadow-emerald-900/10">
+                                    <div className="glass rounded-3xl p-6 bg-gradient-to-br from-emerald-900/20 to-slate-900 border-emerald-500/20 shadow-lg">
                                         {amalgam ? (
                                             <div className="space-y-4 text-center">
                                                 <p className="text-xl font-medium italic text-slate-100 leading-relaxed">"{amalgam}"</p>
-                                                <button onClick={() => setAmalgam("")} className="text-xs text-slate-500 underline py-2">Ustaw nowy cel</button>
+                                                <button onClick={() => setAmalgam("")} className="text-xs text-slate-500 underline py-2">Nowy cel</button>
                                             </div>
                                         ) : (
                                             <div className="space-y-4">
                                                 <p className="text-xs text-slate-400">Co Cię dziś stresuje?</p>
                                                 <div className="flex gap-2">
-                                                    <input value={challenge} onChange={e => setChallenge(e.target.value)} placeholder="Wpisz problem..." className="flex-1 bg-slate-800/50 rounded-2xl px-4 py-3 text-base outline-none border border-slate-700 focus:border-emerald-500" />
+                                                    <input value={challenge} onChange={e => setChallenge(e.target.value)} placeholder="Problem..." className="flex-1 bg-slate-800/50 rounded-2xl px-4 py-3 text-base outline-none border border-slate-700 focus:border-emerald-500" />
                                                     <button onClick={handleAmalgam} disabled={isBusy} className="bg-emerald-600 p-3 rounded-2xl active:scale-95 transition-all text-white">
                                                         {isBusy ? "..." : <Icon path={Icons.Send} size={20}/>}
                                                     </button>
@@ -296,7 +290,7 @@
                                     <h2 className="text-xl font-bold flex items-center gap-2 text-blue-400">Baza Wiedzy</h2>
                                     <button onClick={() => { setNewPearlCategory(Kategoria.ZASADA); setIsAddingPearl(true); }} className="bg-blue-600 p-3 rounded-full shadow-lg active:scale-90 text-white"><Icon path={Icons.Plus} size={24}/></button>
                                 </div>
-                                <div className="space-y-4 pb-12">
+                                <div className="space-y-4">
                                     {pearls.map(p => {
                                         const s = getPearlStyles(p.kategoria);
                                         return (
@@ -328,7 +322,7 @@
                                     <Icon path={Icons.Search} size={16} className="text-slate-500" />
                                     <input value={journalSearch} onChange={e => setJournalSearch(e.target.value)} placeholder="Szukaj..." className="bg-transparent outline-none text-sm flex-1 text-slate-200" />
                                 </div>
-                                <div className="space-y-4 pb-12">
+                                <div className="space-y-4">
                                     {journal.filter(j => j.haczyk.toLowerCase().includes(journalSearch.toLowerCase())).map(j => (
                                         <div key={j.id} className="glass rounded-2xl p-4 border-l-4 border-emerald-500 space-y-3">
                                             <div className="flex justify-between items-center text-[10px] text-slate-500 border-b border-white/5 pb-2">
@@ -349,8 +343,8 @@
 
                         {activeTab === 'analiza' && (
                             <div className="space-y-6 animate-slide-up">
-                                <h2 className="text-xl font-bold flex items-center gap-2 px-1 text-purple-400">Twój Poziom Energii</h2>
-                                <div className="glass rounded-3xl p-6 h-64 border-purple-500/10 shadow-lg shadow-purple-900/10">
+                                <h2 className="text-xl font-bold flex items-center gap-2 px-1 text-purple-400">Trend Energii</h2>
+                                <div className="glass rounded-3xl p-6 h-64 border-purple-500/10 shadow-lg">
                                     <SimpleChart data={chartData} />
                                 </div>
                             </div>
@@ -364,7 +358,7 @@
                                         <Icon path={Icons.Key} size={24} className="text-blue-400"/>
                                         <h3 className="text-sm font-bold text-slate-200">Klucz API Gemini AI</h3>
                                     </div>
-                                    <input type="password" value={apiKey} onChange={(e) => setApiKey(e.target.value)} placeholder="Wklej klucz API..." className="w-full bg-slate-900/80 rounded-xl p-4 border border-slate-700 outline-none text-slate-200 font-mono text-xs" />
+                                    <input type="password" value={apiKey} onChange={(e) => setApiKey(e.target.value)} placeholder="Wklej klucz..." className="w-full bg-slate-900/80 rounded-xl p-4 border border-slate-700 outline-none text-slate-200 font-mono text-xs" />
                                 </div>
                                 <div className="glass rounded-3xl p-6 space-y-4">
                                      <h3 className="text-sm font-bold text-slate-200 mb-2">Strefa Niebezpieczna</h3>
@@ -374,7 +368,7 @@
                         )}
                     </main>
 
-                    {/* MODALE - Dodawanie Perełek i Dziennika */}
+                    {/* --- MODALE --- */}
                     {isAddingPearl && (
                         <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[100] flex items-end justify-center sm:items-center p-0 sm:p-4" onClick={() => setIsAddingPearl(false)}>
                             <div className="glass w-full max-w-md rounded-t-[2.5rem] sm:rounded-[2.5rem] p-6 space-y-5 animate-slide-up bg-[#0f172a]" onClick={e => e.stopPropagation()}>
@@ -405,7 +399,7 @@
                         </div>
                     )}
 
-                    <nav className="fixed bottom-0 left-0 right-0 max-w-lg mx-auto glass flex justify-around items-center p-2 pb-6 sm:pb-2 rounded-t-[2rem] safe-bottom z-40 border-t border-white/10 backdrop-blur-xl bg-[#0f172a]/80">
+                    <nav className="fixed bottom-0 left-0 right-0 max-w-lg mx-auto glass flex justify-around items-center p-2 pb-6 sm:pb-2 rounded-t-[2rem] safe-bottom z-40 border-t border-white/10 backdrop-blur-xl bg-[#0f172a]/90">
                         <NavBtn active={activeTab === 'dashboard'} onClick={() => setActiveTab('dashboard')} icon={Icons.Shield} label="Dziś" />
                         <NavBtn active={activeTab === 'wiedza'} onClick={() => setActiveTab('wiedza')} icon={Icons.Book} label="Baza" />
                         <NavBtn active={activeTab === 'dziennik'} onClick={() => setActiveTab('dziennik')} icon={Icons.Pen} label="Log" />
@@ -422,16 +416,9 @@
             </button>
         );
 
-        // --- RENDEROWANIE (Bezpieczne) ---
-        try {
-            const rootElement = document.getElementById('root');
-            if (!rootElement) throw new Error("Brak elementu #root");
-            const root = createRoot(rootElement);
-            root.render(<App />);
-        } catch (e) {
-            document.getElementById('debug-error').style.display = 'block';
-            document.getElementById('debug-error').innerText = "BŁĄD STARTU: " + e.message;
-        }
+        // --- START ---
+        const root = createRoot(document.getElementById('root'));
+        root.render(<App />);
     </script>
 </body>
 </html>
