@@ -4,17 +4,15 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="theme-color" content="#0f172a">
     <title>Nawigator Rzeczywistości</title>
-    <link rel="manifest" href="manifest.json">
     
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     
-    <script crossorigin src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
-    <script crossorigin src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
-    <script crossorigin src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.5/babel.min.js"></script>
+    <script crossorigin="anonymous" src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin="anonymous" src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script crossorigin="anonymous" src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 
     <style>
         body { font-family: 'Inter', sans-serif; background-color: #0f172a; color: #f8fafc; -webkit-tap-highlight-color: transparent; overscroll-behavior-y: none; }
@@ -25,48 +23,42 @@
         @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
         input, textarea, select { font-size: 16px !important; }
         
-        /* Ekran ładowania */
-        #loading-screen { position: fixed; inset: 0; background: #0f172a; z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; transition: opacity 0.5s; }
-        .spinner { width: 40px; height: 40px; border: 4px solid rgba(255,255,255,0.1); border-left-color: #34d399; border-radius: 50%; animation: spin 1s linear infinite; }
-        @keyframes spin { to { transform: rotate(360deg); } }
-        
-        #debug-error { display: none; padding: 20px; color: #f87171; background: #1a0f0f; border: 1px solid red; margin: 20px; border-radius: 10px; font-family: monospace; white-space: pre-wrap; z-index: 10000; position: relative; }
+        /* Debugger na ekranie */
+        #error-console { display: none; position: fixed; top: 0; left: 0; right: 0; padding: 20px; background: #450a0a; color: #fca5a5; font-family: monospace; font-size: 12px; z-index: 99999; border-bottom: 2px solid red; white-space: pre-wrap; }
     </style>
 </head>
 <body>
-    <div id="loading-screen">
-        <div class="spinner"></div>
-        <p style="margin-top: 15px; color: #64748b; font-size: 12px; letter-spacing: 1px;">ŁADOWANIE SYSTEMU...</p>
+    <div id="error-console"></div>
+    <div id="root">
+        <div style="height: 100vh; display:flex; align-items:center; justify-content:center; color:#475569;">
+            Ładowanie aplikacji...
+        </div>
     </div>
-
-    <div id="root"></div>
-    <div id="debug-error"></div>
 
     <script>
         window.onerror = function(msg, url, line, col, error) {
-            document.getElementById('loading-screen').style.display = 'none';
-            const errDiv = document.getElementById('debug-error');
-            errDiv.style.display = 'block';
-            errDiv.innerText = "BŁĄD:\n" + msg + "\n\nSpróbuj odświeżyć stronę.";
+            var consoleDiv = document.getElementById('error-console');
+            consoleDiv.style.display = 'block';
+            consoleDiv.innerHTML += "BŁĄD: " + msg + "\nLinia: " + line + "\nURL: " + url + "\n\n";
+            // Próba wymuszenia odświeżenia cache jeśli to błąd ładowania
+            if(msg.toLowerCase().includes('script error')) {
+                consoleDiv.innerHTML += "WSKAZÓWKA: To może być wina starej pamięci podręcznej.\nSpróbuj otworzyć stronę w trybie PRYWATNYM.";
+            }
             return false;
         };
     </script>
 
-    <script type="text/babel">
-        // Sprawdzenie czy biblioteki się załadowały
-        if (!window.React || !window.ReactDOM) {
-            throw new Error("Biblioteka React nie została załadowana. Sprawdź połączenie z internetem.");
+    <script type="text/babel" data-presets="env,react">
+        
+        // Sprawdzenie czy React się załadował
+        if (typeof React === 'undefined' || typeof ReactDOM === 'undefined') {
+            throw new Error("Biblioteki React nie zostały załadowane. Sprawdź łącze.");
         }
 
         const { useState, useEffect, useMemo } = React;
         const { createRoot } = ReactDOM;
 
-        // --- SERVICE WORKER ---
-        if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('./sw.js').catch(() => {});
-        }
-
-        // --- IKONY ---
+        // IKONY
         const Icon = ({ path, color = "currentColor", size = 24, className = "" }) => (
             <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
                 {path}
@@ -88,16 +80,18 @@
             Key: <path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4" />
         };
 
-        // --- WYKRES ---
         const SimpleChart = ({ data }) => {
             if (!data || data.length === 0) return <div className="h-full flex items-center justify-center text-slate-500 text-xs">Brak danych</div>;
             const height = 150, width = 300, padding = 20, maxVal = 5;
+            
             const points = data.map((d, i) => {
                 const x = padding + (i / (data.length - 1 || 1)) * (width - 2 * padding);
                 const y = height - padding - (d.energy / maxVal) * (height - 2 * padding);
                 return `${x},${y}`;
             }).join(" ");
+            
             const areaPoints = `${points} ${width-padding},${height-padding} ${padding},${height-padding}`;
+
             return (
                 <div className="w-full h-full flex flex-col">
                     <svg viewBox={`0 0 ${width} ${height}`} className="w-full h-full overflow-visible">
@@ -116,7 +110,6 @@
             );
         };
 
-        // --- APLIKACJA ---
         const Kategoria = { SOS: "🚨 SOS", SLAJD: "🎥 SLAJD", ZASADA: "🧠 ZASADA" };
         const HOOK_OPTIONS = ['Aplikacja Paliwowa', 'Szef', 'Korek', 'Lęk', 'Inny Kierowca', 'Zmęczenie', 'Inne'];
         const INITIAL_PERELKI = [
@@ -124,10 +117,12 @@
             { id: "2", kategoria: Kategoria.SLAJD, tytul: "Bezpieczna Trasa", trescPorady: "Widzisz zielone światła i pustą drogę.", afirmacjaSkrot: "Płynę w Prądzie Wariantów." }
         ];
 
-        // Bezpieczny odczyt z localStorage
+        // Bezpieczny odczyt JSON
         const safeJSON = (key, fallback) => {
-            try { return JSON.parse(localStorage.getItem(key)) || fallback; } 
-            catch { return fallback; }
+            try { 
+                const item = localStorage.getItem(key);
+                return item ? JSON.parse(item) : fallback;
+            } catch (e) { return fallback; }
         };
 
         function App() {
@@ -143,24 +138,15 @@
             const [challenge, setChallenge] = useState("");
             const [journalSearch, setJournalSearch] = useState("");
             
-            // Form states
             const [newPearlCategory, setNewPearlCategory] = useState(Kategoria.ZASADA);
             const [newPearlTytul, setNewPearlTytul] = useState("");
             const [newPearlTresc, setNewPearlTresc] = useState("");
             const [newPearlAfirmacja, setNewPearlAfirmacja] = useState("");
 
-            // Zapisywanie
             useEffect(() => { localStorage.setItem('nr_journal', JSON.stringify(journal)); }, [journal]);
             useEffect(() => { localStorage.setItem('nr_pearls', JSON.stringify(pearls)); }, [pearls]);
             useEffect(() => { localStorage.setItem('nr_amalgam', amalgam); }, [amalgam]);
             useEffect(() => { localStorage.setItem('nr_api_key', apiKey); }, [apiKey]);
-            
-            // Ukrycie loadera po starcie aplikacji
-            useEffect(() => {
-                const loader = document.getElementById('loading-screen');
-                if(loader) loader.style.opacity = '0';
-                setTimeout(() => { if(loader) loader.style.display = 'none'; }, 500);
-            }, []);
 
             const handleDeletePearl = (e, id) => {
                 e.preventDefault(); e.stopPropagation();
@@ -289,6 +275,7 @@
                                 <div className="flex justify-between items-center px-1">
                                     <h2 className="text-xl font-bold flex items-center gap-2 text-blue-400">Baza Wiedzy</h2>
                                     <button onClick={() => { setNewPearlCategory(Kategoria.ZASADA); setIsAddingPearl(true); }} className="bg-blue-600 p-3 rounded-full shadow-lg active:scale-90 text-white"><Icon path={Icons.Plus} size={24}/></button>
+                                    
                                 </div>
                                 <div className="space-y-4">
                                     {pearls.map(p => {
