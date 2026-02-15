@@ -719,6 +719,22 @@
                 <button onclick="hardReset()"
                     class="w-full py-4 mt-6 glass text-red-400 rounded-2xl font-bold border-red-500/20">RESET
                     DANYCH</button>
+
+                <div class="glass rounded-3xl p-6 mt-6 border border-slate-700/50">
+                    <h3 class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-4">Informacje o
+                        Aplikacji</h3>
+                    <div class="flex justify-between items-center mb-4">
+                        <span class="text-xs text-slate-400">Wersja</span>
+                        <span id="app-version" class="text-xs font-bold text-blue-400">v1.4.0</span>
+                    </div>
+                    <button onclick="forceUpdate()"
+                        class="w-full py-3 bg-blue-600/20 text-blue-400 rounded-xl font-bold text-[10px] border border-blue-500/30 uppercase">
+                        Wymuś Aktualizację
+                    </button>
+                    <p class="text-[9px] text-slate-500 mt-3 italic leading-relaxed text-center">
+                        Użyj tej funkcji, jeśli nie widzisz nowych zmian. Twoje dane w telefonie zostaną zachowane.
+                    </p>
+                </div>
             </div>
     </div>
     </div>
@@ -1619,6 +1635,27 @@
 
             function saveApiKey() { state.apiKey = document.getElementById('api-key-input').value; save(); showToast('Zapisano klucz API'); }
             function hardReset() { if (confirm("Usunąć wszystko?")) { localStorage.clear(); location.reload(); } }
+
+            function forceUpdate() {
+                if (confirm("Aplikacja zostanie odświeżona, aby pobrać najnowszą wersję z GitHub.\n\nTwoje dane (perełki i dziennik) zostaną zachowane.\n\nCzy chcesz kontynuować?")) {
+                    // Cache busting przez parametr wersji w URL
+                    const newUrl = window.location.origin + window.location.pathname + '?v=' + Date.now();
+
+                    // Próba wyrejestrowania service workerów (jeśli istnieją)
+                    if ('serviceWorker' in navigator) {
+                        navigator.serviceWorker.getRegistrations().then(registrations => {
+                            for (let registration of registrations) {
+                                registration.unregister();
+                            }
+                            window.location.replace(newUrl);
+                        }).catch(() => {
+                            window.location.replace(newUrl);
+                        });
+                    } else {
+                        window.location.replace(newUrl);
+                    }
+                }
+            }
 
             function speakAmalgam() {
                 if (!state.amalgam) return;
