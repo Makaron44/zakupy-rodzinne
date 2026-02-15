@@ -45,8 +45,8 @@
             overflow-y: auto;
             -webkit-overflow-scrolling: touch;
             /* Płynne przewijanie na iOS */
-            padding-bottom: 20px;
-            /* Minimalny odstęp */
+            padding-bottom: 110px;
+            /* Miejsce na menu fixed */
         }
 
         .glass {
@@ -187,6 +187,25 @@
             border: 1px solid rgba(255, 255, 255, 0.1);
         }
 
+        .filter-btn {
+            padding: 8px 16px;
+            border-radius: 99px;
+            font-size: 13px;
+            font-weight: 500;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            background: rgba(255, 255, 255, 0.05);
+            color: #94a3b8;
+            white-space: nowrap;
+            transition: all 0.2s;
+        }
+
+        .filter-btn.active {
+            background: #3b82f6;
+            color: white;
+            border-color: #3b82f6;
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+        }
+
         #toast-container {
             position: fixed;
             top: 20px;
@@ -259,20 +278,22 @@
             color: #10b981;
         }
 
-        /* POPRAWIONA NAWIGACJA - FLEX FLOW */
+        /* PRZYWRÓCONA STABILNA NAWIGACJA - FIXED BOTTOM */
         .fixed-nav {
-            flex-shrink: 0;
-            /* Nie pozwala zwęzić menu */
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
             height: calc(75px + env(safe-area-inset-bottom));
             padding-bottom: env(safe-area-inset-bottom);
             background: rgba(15, 23, 42, 0.98);
-            backdrop-filter: blur(20px);
-            z-index: 50;
+            backdrop-filter: blur(25px);
+            z-index: 100;
             display: flex;
             justify-content: space-between;
             align-items: center;
             border-top: 1px solid rgba(255, 255, 255, 0.1);
-            box-shadow: 0 -10px 30px rgba(0, 0, 0, 0.5);
+            box-shadow: 0 -15px 40px rgba(0, 0, 0, 0.6);
         }
 
         .nav-btn-fixed {
@@ -412,23 +433,22 @@
 
             <div id="tab-wiedza" class="view-section">
                 <div class="flex flex-col gap-4 mb-4">
-                    <div class="flex justify-between items-center px-1">
-                        <h2 class="text-xl font-bold text-blue-400">Baza Wiedzy</h2>
-                        <button onclick="openModal('pearl', '🧠 ZASADA')"
-                            class="bg-blue-600 p-3 rounded-full text-white shadow-lg active:scale-90"><svg width="24"
-                                height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <line x1="12" y1="8" x2="12" y2="16"></line>
-                                <line x1="8" y1="12" x2="16" y2="12"></line>
-                            </svg></button>
+                    <div class="flex justify-between items-center mb-6 px-1">
+                        <h2
+                            class="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-indigo-400">
+                            Baza Wiedzy</h2>
+                        <button onclick="openModal('pearl')"
+                            class="bg-blue-600 p-3 rounded-2xl text-white shadow-lg shadow-blue-500/20 active:scale-90 flex items-center gap-2">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2.5">
+                                <line x1="12" y1="5" x2="12" y2="19"></line>
+                                <line x1="5" y1="12" x2="19" y2="12"></line>
+                            </svg>
+                        </button>
                     </div>
-                    <div class="flex gap-2 overflow-x-auto pb-2 no-scrollbar" id="filter-bar">
-                        <button onclick="setFilter('ALL')" class="filter-btn active">Wszystkie</button>
-                        <button onclick="setFilter('🚨 SOS')" class="filter-btn">SOS</button>
-                        <button onclick="setFilter('🧠 ZASADA')" class="filter-btn">Zasada</button>
-                        <button onclick="setFilter('🎥 SLAJD')" class="filter-btn">Slajd</button>
-                        <button onclick="setFilter('🧘 SPOKÓJ')" class="filter-btn">Spokój</button>
-                        <button onclick="setFilter('💰 FINANSE')" class="filter-btn">Finanse</button>
-                        <button onclick="setFilter('❤️ ZDROWIE')" class="filter-btn">Zdrowie</button>
+                    <div class="mb-4">
+                        <div class="flex gap-2 overflow-x-auto pb-4 no-scrollbar" id="filter-bar">
+                        </div>
                     </div>
                 </div>
                 <div id="wiedza-container" class="space-y-4 pb-20"></div>
