@@ -15,7 +15,7 @@
     <link rel="manifest" href="manifest.json">
 
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js"></script>
     <script src="https://unpkg.com/html5-qrcode"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 
@@ -798,24 +798,24 @@
             </div>
 
             <div id="view-qr-container"
-                class="hidden flex flex-col items-center gap-2 mt-2 p-4 bg-white rounded-2xl mx-auto">
-                <div id="view-qr-code"></div>
+                class="hidden flex flex-col items-center gap-2 mt-2 p-4 bg-white rounded-2xl mx-auto shadow-inner">
+                <canvas id="view-qr-canvas"></canvas>
                 <p class="text-[9px] text-slate-900 font-bold uppercase">Skanuj telefonem</p>
             </div>
 
-            <div class="flex gap-2 mt-2">
-                <button id="btn-show-qr" onclick="generatePearlQR()"
-                    class="flex-1 py-3 bg-blue-600/20 text-blue-400 rounded-xl font-bold text-[10px] border border-blue-500/30 flex items-center justify-center gap-2 uppercase">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <rect x="3" y="3" width="7" height="7"></rect>
-                        <rect x="14" y="3" width="7" height="7"></rect>
-                        <rect x="14" y="14" width="7" height="7"></rect>
-                        <rect x="3" y="14" width="7" height="7"></rect>
-                    </svg>
-                    Transfer QR
-                </button>
+            <div class="flex flex-col gap-2 mt-2">
+                <div class="flex gap-2 w-full">
+                    <button id="btn-show-qr" onclick="generatePearlQR()"
+                        class="flex-1 py-3 bg-blue-600/20 text-blue-400 rounded-xl font-bold text-[10px] border border-blue-500/30 flex items-center justify-center gap-2 uppercase">
+                        QR Transfer
+                    </button>
+                    <button onclick="copyPearlToClipboard()"
+                        class="flex-1 py-3 bg-emerald-600/20 text-emerald-400 rounded-xl font-bold text-[10px] border border-emerald-500/30 flex items-center justify-center gap-2 uppercase">
+                        Kopiuj Tekst
+                    </button>
+                </div>
                 <button onclick="closeModal('view-pearl')"
-                    class="flex-1 py-3 bg-slate-800 rounded-xl text-slate-400 font-bold text-[10px] uppercase">Zamknij</button>
+                    class="w-full py-3 bg-slate-800 rounded-xl text-slate-400 font-bold text-[10px] uppercase">Zamknij</button>
             </div>
         </div>
     </div>
@@ -1038,31 +1038,41 @@
                 const affirm = document.getElementById('view-affirm').textContent;
                 const category = document.getElementById('modal-view-pearl').dataset.category || "🧠 ZASADA";
 
-                // Formant kompaktowy p|id|kategoria|tytul|tresc|afirmacja
+                // Formant kompaktowy p~|~id~|~kategoria~|~tytul~|~tresc~|~afirmacja
                 const compactData = `p~|~${Date.now().toString(36)}~|~${category}~|~${title}~|~${desc}~|~${affirm}`;
 
-                const qrDiv = document.getElementById('view-qr-code');
                 const qrContainer = document.getElementById('view-qr-container');
                 const btnShow = document.getElementById('btn-show-qr');
-
-                qrDiv.innerHTML = "";
-                qrContainer.classList.remove('hidden');
+                const canvas = document.getElementById('view-qr-canvas');
 
                 try {
-                    new QRCode(qrDiv, {
-                        text: compactData,
-                        width: 200,
-                        height: 200,
-                        colorDark: "#000000",
-                        colorLight: "#ffffff",
-                        correctLevel: QRCode.CorrectLevel.L
+                    new QRious({
+                        element: canvas,
+                        value: compactData,
+                        size: 200,
+                        level: 'L'
                     });
+                    qrContainer.classList.remove('hidden');
                     btnShow.classList.add('hidden');
                 } catch (err) {
                     console.error("QR Error:", err);
-                    showToast("Błąd: Dane są zbyt duże do zakodowania.");
-                    qrContainer.classList.add('hidden');
+                    showToast("Błąd generowania kodu. Tekst może być zbyt długi.", true);
                 }
+            }
+
+            function copyPearlToClipboard() {
+                const title = document.getElementById('view-title').textContent;
+                const desc = document.getElementById('view-desc').textContent;
+                const affirm = document.getElementById('view-affirm').textContent;
+                const category = document.getElementById('modal-view-pearl').dataset.category || "🧠 ZASADA";
+
+                const text = `PEREŁKA: ${title}\nKATEGORIA: ${category}\nTREŚĆ: ${desc}\nAFIRMACJA: ${affirm}`;
+
+                navigator.clipboard.writeText(text).then(() => {
+                    showToast("Tekst skopiowany do schowka! Możesz go wysłać np. przez Messenger.");
+                }).catch(err => {
+                    alert("Błąd kopiowania: " + err);
+                });
             }
 
             let html5QrCode = null;
