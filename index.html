@@ -87,6 +87,33 @@
             margin-bottom: 10px;
         }
 
+        @keyframes breathe {
+            0% {
+                transform: scale(1);
+                opacity: 0.3;
+                box-shadow: 0 0 10px rgba(168, 85, 247, 0.2);
+            }
+
+            33% {
+                transform: scale(1.6);
+                opacity: 1;
+                box-shadow: 0 0 40px rgba(168, 85, 247, 0.5);
+                border-color: #d8b4fe;
+            }
+
+            66% {
+                transform: scale(1.6);
+                opacity: 1;
+                box-shadow: 0 0 40px rgba(168, 85, 247, 0.5);
+            }
+
+            100% {
+                transform: scale(1);
+                opacity: 0.3;
+                box-shadow: 0 0 10px rgba(168, 85, 247, 0.2);
+            }
+        }
+
         .breathe-circle {
             width: 60px;
             height: 60px;
@@ -94,24 +121,7 @@
             background: radial-gradient(circle, rgba(168, 85, 247, 0.4) 0%, rgba(168, 85, 247, 0) 70%);
             border: 2px solid rgba(168, 85, 247, 0.5);
             box-shadow: 0 0 20px rgba(168, 85, 247, 0.3);
-            animation: breathe 10s infinite ease-in-out;
-        }
-
-        @keyframes breathe {
-
-            0%,
-            100% {
-                transform: scale(1);
-                opacity: 0.3;
-                box-shadow: 0 0 10px rgba(168, 85, 247, 0.2);
-            }
-
-            50% {
-                transform: scale(1.6);
-                opacity: 1;
-                box-shadow: 0 0 40px rgba(168, 85, 247, 0.5);
-                border-color: #d8b4fe;
-            }
+            animation: breathe 12s infinite ease-in-out;
         }
 
         .breathe-faze {
@@ -1480,18 +1490,25 @@
 
                 setInterval(() => {
                     const now = Date.now();
-                    const cycle = 10000; // 10s cycle (5s in, 5s out)
+                    const cycle = 12000; // 12s cycle (4s in, 4s hold, 4s out)
                     const progress = now % cycle;
 
-                    if (progress < 5000) {
-                        const timeLeft = Math.ceil((5000 - progress) / 1000);
+                    if (progress < 4000) {
+                        const timeLeft = Math.ceil((4000 - progress) / 1000);
                         if (fazeEl.textContent !== 'WDECH') {
                             fazeEl.textContent = 'WDECH';
                             fazeEl.style.color = '#c084fc';
                         }
                         timerEl.textContent = timeLeft;
+                    } else if (progress < 8000) {
+                        const timeLeft = Math.ceil((8000 - progress) / 1000);
+                        if (fazeEl.textContent !== 'ZATRZYMAJ') {
+                            fazeEl.textContent = 'ZATRZYMAJ';
+                            fazeEl.style.color = '#fbbf24';
+                        }
+                        timerEl.textContent = timeLeft;
                     } else {
-                        const timeLeft = Math.ceil((10000 - progress) / 1000);
+                        const timeLeft = Math.ceil((12000 - progress) / 1000);
                         if (fazeEl.textContent !== 'WYDECH') {
                             fazeEl.textContent = 'WYDECH';
                             fazeEl.style.color = '#818cf8';
