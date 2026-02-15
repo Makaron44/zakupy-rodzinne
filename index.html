@@ -529,6 +529,14 @@
                     </div>
                     <div class="mb-4">
                         <div class="flex gap-2 overflow-x-auto pb-4 no-scrollbar" id="filter-bar">
+                            <button onclick="setFilter('ALL', this)" class="filter-btn active">Wszystkie</button>
+                            <button onclick="setFilter('🚨 SOS', this)" class="filter-btn">SOS</button>
+                            <button onclick="setFilter('🧠 ZASADA', this)" class="filter-btn">Zasada</button>
+                            <button onclick="setFilter('🎥 SLAJD', this)" class="filter-btn">Slajd</button>
+                            <button onclick="setFilter('🧘 SPOKÓJ', this)" class="filter-btn">Spokój</button>
+                            <button onclick="setFilter('💰 FINANSE', this)" class="filter-btn">Finanse</button>
+                            <button onclick="setFilter('❤️ ZDROWIE', this)" class="filter-btn">Zdrowie</button>
+                            <button onclick="setFilter('🤝 RELACJE', this)" class="filter-btn">Relacje</button>
                         </div>
                     </div>
                 </div>
@@ -536,15 +544,6 @@
             </div>
 
             <div id="tab-dziennik" class="view-section">
-                <div class="flex justify-between items-center px-1 mb-4">
-                    <h2 class="text-xl font-bold text-emerald-400">Dziennik</h2>
-                    <button onclick="openModal('journal')"
-                        class="bg-emerald-600 p-3 rounded-full text-white shadow-lg active:scale-90"><svg width="24"
-                            height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <line x1="12" y1="8" x2="12" y2="16"></line>
-                            <line x1="6" y1="6" x2="18" y2="18"></line>
-                        </svg></button>
-                </div>
                 <div class="flex justify-between items-center mb-4 px-1">
                     <h2
                         class="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-teal-400">
@@ -857,7 +856,12 @@
             function save() { saveState(); }
 
             // --- FILTER ---
-            function setFilter(category) { state.filter = category; renderWiedza(); }
+            function setFilter(category, btn) {
+                state.filter = category;
+                document.querySelectorAll('#filter-bar .filter-btn').forEach(b => b.classList.remove('active'));
+                if (btn) btn.classList.add('active');
+                renderWiedza();
+            }
 
             // --- MODAL VIEW ---
             function viewPearl(id) {
