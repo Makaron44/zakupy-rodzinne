@@ -15,6 +15,8 @@
     <link rel="manifest" href="manifest.json">
 
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <script src="https://unpkg.com/html5-qrcode"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 
     <style>
@@ -773,6 +775,15 @@
                 </svg>
                 <span class="text-sm italic">Ustawienia</span>
             </div>
+            <div onclick="startQRScanner()" class="sidebar-item text-blue-400 border-t border-white/5 mt-2 pt-4">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="3" y="3" width="7" height="7"></rect>
+                    <rect x="14" y="3" width="7" height="7"></rect>
+                    <rect x="14" y="14" width="7" height="7"></rect>
+                    <rect x="3" y="14" width="7" height="7"></rect>
+                </svg>
+                <span class="text-sm font-bold uppercase tracking-tighter">Skanuj QR</span>
+            </div>
         </div>
     </div>
 
@@ -785,8 +796,27 @@
                 <p class="text-[10px] text-slate-500 uppercase tracking-widest mb-2">Afirmacja</p>
                 <p id="view-affirm" class="text-lg font-bold text-emerald-400 leading-snug"></p>
             </div>
-            <button onclick="closeModal('view-pearl')"
-                class="mt-4 py-3 w-full bg-slate-800 rounded-xl text-slate-400 font-bold text-xs">ZAMKNIJ</button>
+
+            <div id="view-qr-container"
+                class="hidden flex flex-col items-center gap-2 mt-2 p-4 bg-white rounded-2xl mx-auto">
+                <div id="view-qr-code"></div>
+                <p class="text-[9px] text-slate-900 font-bold uppercase">Skanuj telefonem</p>
+            </div>
+
+            <div class="flex gap-2 mt-2">
+                <button id="btn-show-qr" onclick="generatePearlQR()"
+                    class="flex-1 py-3 bg-blue-600/20 text-blue-400 rounded-xl font-bold text-[10px] border border-blue-500/30 flex items-center justify-center gap-2 uppercase">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="3" y="3" width="7" height="7"></rect>
+                        <rect x="14" y="3" width="7" height="7"></rect>
+                        <rect x="14" y="14" width="7" height="7"></rect>
+                        <rect x="3" y="14" width="7" height="7"></rect>
+                    </svg>
+                    Transfer QR
+                </button>
+                <button onclick="closeModal('view-pearl')"
+                    class="flex-1 py-3 bg-slate-800 rounded-xl text-slate-400 font-bold text-[10px] uppercase">Zamknij</button>
+            </div>
         </div>
     </div>
 
@@ -816,6 +846,16 @@
                 <button type="button" onclick="addPearl()"
                     class="w-full py-4 bg-blue-600 rounded-2xl font-bold text-white shadow-lg">ZAPISZ</button>
             </div>
+        </div>
+    </div>
+
+    <div id="modal-qr-scanner" class="modal-overlay center-modal" onclick="handleModalClick(event, 'qr-scanner')">
+        <div class="modal-view-content glass flex flex-col gap-4 text-center max-w-[90%]">
+            <h3 class="text-xl font-bold text-white uppercase tracking-wider">Skaner Transferu</h3>
+            <p class="text-[10px] text-slate-400">Skieruj aparat na kod QR</p>
+            <div id="reader" class="rounded-2xl overflow-hidden bg-black aspect-square w-full"></div>
+            <button onclick="stopQRScanner()"
+                class="mt-4 py-4 w-full bg-slate-800 rounded-2xl text-slate-400 font-bold text-xs uppercase">Anuluj</button>
         </div>
     </div>
 
@@ -961,6 +1001,12 @@
             function viewPearl(id) {
                 const pearl = state.pearls.find(p => p.id === id);
                 if (!pearl) return;
+
+                // Reset QR
+                document.getElementById('view-qr-container').classList.add('hidden');
+                document.getElementById('btn-show-qr').classList.remove('hidden');
+                document.getElementById('modal-view-pearl').dataset.category = pearl.kategoria;
+
                 document.getElementById('view-title').textContent = pearl.tytul;
                 document.getElementById('view-desc').textContent = `"${pearl.trescPorady}"`;
                 document.getElementById('view-affirm').textContent = pearl.afirmacjaSkrot;
@@ -984,6 +1030,85 @@
                 iconContainer.innerHTML = iconSvg;
                 iconContainer.className = `mx-auto p-4 rounded-full bg-slate-800 mb-2 w-fit ${color}`;
                 openModal('view-pearl');
+            }
+
+            function generatePearlQR() {
+                const title = document.getElementById('view-title').textContent;
+                const desc = document.getElementById('view-desc').textContent.replace(/^"|"$/g, '');
+                const affirm = document.getElementById('view-affirm').textContent;
+                const category = document.getElementById('modal-view-pearl').dataset.category || "🧠 ZASADA";
+
+                const data = {
+                    type: 'pearl',
+                    pearl: {
+                        id: 'qr_' + Date.now(),
+                        kategoria: category,
+                        tytul: title,
+                        trescPorady: desc,
+                        afirmacjaSkrot: affirm
+                    }
+                };
+
+                const qrDiv = document.getElementById('view-qr-code');
+                qrDiv.innerHTML = "";
+                document.getElementById('view-qr-container').classList.remove('hidden');
+
+                new QRCode(qrDiv, {
+                    text: JSON.stringify(data),
+                    width: 160,
+                    height: 160,
+                    colorDark: "#000000",
+                    colorLight: "#ffffff",
+                    correctLevel: QRCode.CorrectLevel.H
+                });
+
+                document.getElementById('btn-show-qr').classList.add('hidden');
+            }
+
+            let html5QrCode = null;
+
+            async function startQRScanner() {
+                toggleSidebar();
+                openModal('qr-scanner');
+                setTimeout(async () => {
+                    try {
+                        html5QrCode = new Html5Qrcode("reader");
+                        const config = { fps: 10, qrbox: { width: 250, height: 250 } };
+                        await html5QrCode.start({ facingMode: "environment" }, config, onScanSuccess);
+                    } catch (err) {
+                        alert("Błąd aparatu: " + err);
+                        stopQRScanner();
+                    }
+                }, 300);
+            }
+
+            function stopQRScanner() {
+                if (html5QrCode && html5QrCode.isScanning) {
+                    html5QrCode.stop().then(() => {
+                        html5QrCode.clear();
+                        closeModal('qr-scanner');
+                    }).catch(err => closeModal('qr-scanner'));
+                } else {
+                    closeModal('qr-scanner');
+                }
+            }
+
+            function onScanSuccess(decodedText) {
+                stopQRScanner();
+                try {
+                    const data = JSON.parse(decodedText);
+                    if (data.type === 'pearl' && data.pearl) {
+                        const exists = state.pearls.find(p => p.id === data.pearl.id || (p.tytul === data.pearl.tytul && p.trescPorady === data.pearl.trescPorady));
+                        if (exists) {
+                            showToast("Ta perełka już jest w Twojej bazie.");
+                        } else {
+                            state.pearls.push(data.pearl);
+                            save();
+                            refreshAllViews();
+                            showToast("Pomyślnie zaimportowano perełkę! ✨");
+                        }
+                    } else { alert("Nieznany format kodu."); }
+                } catch (e) { alert("Błąd odczytu danych QR."); }
             }
 
             // --- JOURNAL LOGIC ---
@@ -1379,12 +1504,23 @@
                     try {
                         const loadedState = JSON.parse(e.target.result);
                         if (loadedState.pearls && loadedState.journal) {
-                            state = loadedState;
+                            const mode = confirm("Czy chcesz SCALIĆ (Merge) dane z obecnymi? (Dopisze tylko nowe)\n\nAnuluj = Całkowite zastąpienie (Overwrite)") ? 'merge' : 'overwrite';
+                            if (mode === 'merge') {
+                                const epIds = new Set(state.pearls.map(p => p.id));
+                                const newP = loadedState.pearls.filter(p => !epIds.has(p.id));
+                                state.pearls = [...state.pearls, ...newP];
+                                const ejIds = new Set(state.journal.map(j => j.id));
+                                const newJ = loadedState.journal.filter(j => !ejIds.has(j.id));
+                                state.journal = [...state.journal, ...newJ];
+                                showToast(`Scalono: +${newP.length} perełek, +${newJ.length} wpisów.`);
+                            } else {
+                                state = loadedState;
+                                showToast('Dane zostały całkowicie zastąpione.');
+                            }
                             save();
                             refreshAllViews();
-                            showToast('Wgrano kopię zapasową!');
-                        } else { alert("Nieprawidłowy plik!"); }
-                    } catch (err) { alert("Błąd pliku: " + err.message); }
+                        } else { alert("Błąd: Nieprawidłowy format pliku kopii."); }
+                    } catch (err) { alert("Błąd odczytu pliku: " + err.message); }
                 };
                 reader.readAsText(file);
             }
