@@ -1039,7 +1039,7 @@
                 const category = document.getElementById('modal-view-pearl').dataset.category || "🧠 ZASADA";
 
                 // Formant kompaktowy p|id|kategoria|tytul|tresc|afirmacja
-                const compactData = `p|${Date.now().toString(36)}|${category}|${title}|${desc}|${affirm}`;
+                const compactData = `p~|~${Date.now().toString(36)}~|~${category}~|~${title}~|~${desc}~|~${affirm}`;
 
                 const qrDiv = document.getElementById('view-qr-code');
                 const qrContainer = document.getElementById('view-qr-container');
@@ -1097,8 +1097,8 @@
                 stopQRScanner();
                 try {
                     let pearl = null;
-                    if (decodedText.startsWith('p|')) {
-                        const parts = decodedText.split('|');
+                    if (decodedText.startsWith('p~|~')) {
+                        const parts = decodedText.split('~|~');
                         pearl = {
                             id: parts[1],
                             kategoria: parts[2],
