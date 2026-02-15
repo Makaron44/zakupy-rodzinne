@@ -102,16 +102,45 @@
             0%,
             100% {
                 transform: scale(1);
-                opacity: 0.5;
+                opacity: 0.3;
                 box-shadow: 0 0 10px rgba(168, 85, 247, 0.2);
             }
 
             50% {
-                transform: scale(1.8);
+                transform: scale(1.6);
                 opacity: 1;
-                box-shadow: 0 0 30px rgba(168, 85, 247, 0.6);
+                box-shadow: 0 0 40px rgba(168, 85, 247, 0.5);
                 border-color: #d8b4fe;
             }
+        }
+
+        .breathe-faze {
+            font-size: 10px;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.2em;
+            color: rgba(216, 180, 254, 0.8);
+            margin-bottom: 0.5rem;
+            transition: all 0.5s ease;
+        }
+
+        .breathe-timer {
+            font-size: 1.5rem;
+            font-weight: 300;
+            color: white;
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+        }
+
+        .section-toggle {
+            transition: transform 0.3s ease;
+        }
+
+        .section-collapsed .section-content {
+            display: none;
+        }
+
+        .section-collapsed .section-toggle {
+            transform: rotate(-90deg);
         }
 
         .view-section {
@@ -291,21 +320,17 @@
         }
 
         .btn-action {
-            padding: 8px 12px;
+            padding: 0.5rem 0.75rem;
             border-radius: 0.75rem;
-            /* rounded-xl */
             transition: all 0.2s;
             transform: scale(1);
             display: flex;
             align-items: center;
             gap: 0.25rem;
-            /* gap-1 */
-            font-size: 0.625rem;
-            /* text-[10px] */
-            font-weight: bold;
+            font-size: 10px;
+            font-weight: 700;
             text-transform: uppercase;
             letter-spacing: 0.05em;
-            /* tracking-wider */
         }
 
         .btn-action:active {
@@ -484,17 +509,28 @@
                     </div>
                 </section>
 
-                <section class="space-y-3">
-                    <h2
-                        class="text-sm font-bold text-transparent bg-clip-text bg-gradient-to-r from-pink-400 to-purple-400 px-1">
-                        Koherencja Serca</h2>
+                <section id="breathe-section" class="space-y-3">
+                    <div class="flex justify-between items-center px-1 cursor-pointer" onclick="toggleBreatheSection()">
+                        <h2
+                            class="text-sm font-bold text-transparent bg-clip-text bg-gradient-to-r from-pink-400 to-purple-400">
+                            Koherencja Serca</h2>
+                        <svg id="breathe-toggle" class="section-toggle text-purple-400" width="16" height="16"
+                            viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                            <polyline points="6 9 12 15 18 9"></polyline>
+                        </svg>
+                    </div>
                     <div
-                        class="glass rounded-3xl p-6 flex flex-col items-center justify-center gap-4 border-slate-700/50">
+                        class="glass rounded-3xl p-8 flex flex-col items-center justify-center border-slate-700/50 section-content relative overflow-hidden">
+                        <div class="absolute inset-0 bg-purple-500/5 pointer-events-none"></div>
+                        <div id="breathe-faze" class="breathe-faze">PRZYGOTOWANIE</div>
                         <div class="breathe-container">
                             <div class="breathe-circle"></div>
+                            <div id="breathe-timer"
+                                class="absolute inset-0 flex items-center justify-center text-xl font-bold text-white/40 font-mono">
+                                5</div>
                         </div>
-                        <p class="text-[10px] text-slate-500 uppercase tracking-widest text-center mt-2">Wdech • Spokój
-                            • Wydech</p>
+                        <p class="text-[9px] text-slate-500 uppercase tracking-widest text-center mt-4 opacity-60">
+                            Synchronizacja Serca i Umysłu</p>
                     </div>
                 </section>
 
@@ -672,7 +708,7 @@
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <circle cx="12" cy="12" r="3"></circle>
                     <path
-                        d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z">
+                        d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l-.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z">
                     </path>
                 </svg>
                 <span class="text-sm italic">Ustawienia</span>
@@ -805,7 +841,7 @@
                 { id: "2", kategoria: "🎥 SLAJD", tytul: "Bezpieczna Trasa", trescPorady: "Widzisz zielone światła i pustą drogę.", afirmacjaSkrot: "Płynę w Prądzie Wariantów." }
             ];
 
-            let state = { pearls: [], journal: [], amalgam: "", apiKey: "", filter: 'ALL', journalFilter: 'ALL' };
+            let state = { pearls: [], journal: [], amalgam: "", apiKey: "", filter: 'ALL', journalFilter: 'ALL', breatheCollapsed: false };
             let currentTags = []; // Tagi dla nowego wpisu
 
             // --- STORAGE (INDEXEDDB) ---
@@ -1431,9 +1467,50 @@
                 handleGesture();
             }, { passive: true });
 
+            function toggleBreatheSection() {
+                const sec = document.getElementById('breathe-section');
+                state.breatheCollapsed = !state.breatheCollapsed;
+                sec.classList.toggle('section-collapsed', state.breatheCollapsed);
+                save();
+            }
+
+            function startBreatheCycle() {
+                const fazeEl = document.getElementById('breathe-faze');
+                const timerEl = document.getElementById('breathe-timer');
+
+                setInterval(() => {
+                    const now = Date.now();
+                    const cycle = 10000; // 10s cycle (5s in, 5s out)
+                    const progress = now % cycle;
+
+                    if (progress < 5000) {
+                        const timeLeft = Math.ceil((5000 - progress) / 1000);
+                        if (fazeEl.textContent !== 'WDECH') {
+                            fazeEl.textContent = 'WDECH';
+                            fazeEl.style.color = '#c084fc';
+                        }
+                        timerEl.textContent = timeLeft;
+                    } else {
+                        const timeLeft = Math.ceil((10000 - progress) / 1000);
+                        if (fazeEl.textContent !== 'WYDECH') {
+                            fazeEl.textContent = 'WYDECH';
+                            fazeEl.style.color = '#818cf8';
+                        }
+                        timerEl.textContent = timeLeft;
+                    }
+                }, 100);
+            }
+
             window.onload = async () => {
                 await loadState();
                 document.getElementById('api-key-input').value = state.apiKey;
+
+                // Restore breathe section state
+                if (state.breatheCollapsed) {
+                    document.getElementById('breathe-section').classList.add('section-collapsed');
+                }
+
+                startBreatheCycle();
                 switchTab('dashboard');
                 setTimeout(renderChart, 100);
             };
