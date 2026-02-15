@@ -1046,10 +1046,13 @@
                 const canvas = document.getElementById('view-qr-canvas');
 
                 try {
+                    // Kodowanie UTF-8 do Base64, aby uniknąć problemów z polskimi znakami
+                    const encodedData = btoa(encodeURIComponent(compactData));
+
                     new QRious({
                         element: canvas,
-                        value: compactData,
-                        size: 200,
+                        value: encodedData,
+                        size: 220,
                         level: 'L'
                     });
                     qrContainer.classList.remove('hidden');
@@ -1106,9 +1109,15 @@
             function onScanSuccess(decodedText) {
                 stopQRScanner();
                 try {
+                    let dataStr = decodedText;
+                    // Próba dekodowania Base64 (nowy format)
+                    if (!dataStr.startsWith('p~|~')) {
+                        try { dataStr = decodeURIComponent(atob(decodedText)); } catch (e) { }
+                    }
+
                     let pearl = null;
-                    if (decodedText.startsWith('p~|~')) {
-                        const parts = decodedText.split('~|~');
+                    if (dataStr.startsWith('p~|~')) {
+                        const parts = dataStr.split('~|~');
                         pearl = {
                             id: parts[1],
                             kategoria: parts[2],
@@ -1117,7 +1126,7 @@
                             afirmacjaSkrot: parts[5]
                         };
                     } else {
-                        const data = JSON.parse(decodedText);
+                        const data = JSON.parse(dataStr);
                         if (data.type === 'pearl') pearl = data.pearl;
                     }
 
