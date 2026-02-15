@@ -858,8 +858,6 @@
             // --- FILTER ---
             function setFilter(category, btn) {
                 state.filter = category;
-                document.querySelectorAll('#filter-bar .filter-btn').forEach(b => b.classList.remove('active'));
-                if (btn) btn.classList.add('active');
                 renderWiedza();
             }
 
@@ -880,6 +878,9 @@
                 } else if (pearl.kategoria.includes("SLAJD")) {
                     color = "text-purple-400";
                     iconSvg = '<svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline><polyline points="17 6 23 6 23 12"></polyline></svg>';
+                } else if (pearl.kategoria.includes("RELACJE")) {
+                    color = "text-pink-400";
+                    iconSvg = '<svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>';
                 } else {
                     color = "text-blue-400";
                     iconSvg = '<svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>';
@@ -948,9 +949,10 @@
                     { id: '🧠 ZASADA', label: 'Zasada' },
                     { id: '🧘 SPOKÓJ', label: 'Spokój' },
                     { id: '💰 FINANSE', label: 'Finanse' },
-                    { id: '❤️ ZDROWIE', label: 'Zdrowie' }
+                    { id: '❤️ ZDROWIE', label: 'Zdrowie' },
+                    { id: '🤝 RELACJE', label: 'Relacje' }
                 ];
-                filterBar.innerHTML = filters.map(f => `<button onclick="setFilter('${f.id}')" class="filter-btn ${state.filter === f.id ? 'active' : 'inactive'}">${f.label}</button>`).join('');
+                filterBar.innerHTML = filters.map(f => `<button onclick="setFilter('${f.id}')" class="filter-btn ${state.filter === f.id ? 'active' : ''}">${f.label}</button>`).join('');
 
                 const container = document.getElementById('wiedza-container');
                 container.innerHTML = '';
@@ -964,6 +966,7 @@
                     else if (p.kategoria.includes("SPOKÓJ")) { color = 'text-emerald-400'; border = 'border-emerald-500/20'; bg = 'bg-emerald-500/5'; }
                     else if (p.kategoria.includes("FINANSE")) { color = 'text-yellow-400'; border = 'border-yellow-500/20'; bg = 'bg-yellow-500/5'; }
                     else if (p.kategoria.includes("ZDROWIE")) { color = 'text-orange-400'; border = 'border-orange-500/20'; bg = 'bg-orange-500/5'; }
+                    else if (p.kategoria.includes("RELACJE")) { color = 'text-pink-400'; border = 'border-pink-500/20'; bg = 'bg-pink-500/5'; }
 
                     container.innerHTML += `
                     <div class="glass rounded-2xl p-5 border ${border} ${bg} flex justify-between items-start gap-4 mb-4">
