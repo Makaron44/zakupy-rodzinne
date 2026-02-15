@@ -1041,7 +1041,7 @@
                 const data = {
                     type: 'pearl',
                     pearl: {
-                        id: 'qr_' + Date.now(),
+                        id: 'qr_' + Date.now().toString(36),
                         kategoria: category,
                         tytul: title,
                         trescPorady: desc,
@@ -1050,19 +1050,27 @@
                 };
 
                 const qrDiv = document.getElementById('view-qr-code');
+                const qrContainer = document.getElementById('view-qr-container');
+                const btnShow = document.getElementById('btn-show-qr');
+
                 qrDiv.innerHTML = "";
-                document.getElementById('view-qr-container').classList.remove('hidden');
+                qrContainer.classList.remove('hidden');
 
-                new QRCode(qrDiv, {
-                    text: JSON.stringify(data),
-                    width: 160,
-                    height: 160,
-                    colorDark: "#000000",
-                    colorLight: "#ffffff",
-                    correctLevel: QRCode.CorrectLevel.H
-                });
-
-                document.getElementById('btn-show-qr').classList.add('hidden');
+                try {
+                    new QRCode(qrDiv, {
+                        text: JSON.stringify(data),
+                        width: 180,
+                        height: 180,
+                        colorDark: "#000000",
+                        colorLight: "#ffffff",
+                        correctLevel: QRCode.CorrectLevel.M
+                    });
+                    btnShow.classList.add('hidden');
+                } catch (err) {
+                    console.error("QR Error:", err);
+                    showToast("Błąd: Tekst jest za długi dla kodu QR.", true);
+                    qrContainer.classList.add('hidden');
+                }
             }
 
             let html5QrCode = null;
