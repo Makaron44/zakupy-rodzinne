@@ -18,6 +18,7 @@ let currentUser = null;
 let userFamily = null;
 let recentItems = JSON.parse(localStorage.getItem('recentItems') || '[]');
 let realtimeChannel = null;
+let wakeLock = null;
 
 // --- Selectors ---
 const getSelectors = () => ({
@@ -127,6 +128,7 @@ async function handleAuthStateChange(user) {
     s.userDisplay.innerText = `Konto: ${user.email}`;
     await syncProfile();
     setupSubscriptions(); // Uruchom subskrypcje po zalogowaniu
+    requestWakeLock();    // Poproś o niegaszenie ekranu
     refreshData();
   } else {
     s.authLoggedOut.style.display = 'block';
@@ -516,6 +518,17 @@ const init = async () => {
 };
 
 // --- Real-time & Visibility ---
+async function requestWakeLock() {
+  if ('wakeLock' in navigator) {
+    try {
+      wakeLock = await navigator.wakeLock.request('screen');
+      console.log('Wake Lock active!');
+    } catch (err) {
+      console.error(`${err.name}, ${err.message}`);
+    }
+  }
+}
+
 function setupSubscriptions() {
   if (!userFamily) return;
 
@@ -537,18 +550,38 @@ function setupSubscriptions() {
     })
     .subscribe((status) => {
       console.log('Realtime status:', status);
+      // Jeśli połączenie zostało zamknięte lub przerwane - spróbuj odświeżyć
+      if (status === 'CLOSED' || status === 'CHANNEL_ERROR') {
+        setTimeout(setupSubscriptions, 5000);
+      }
     });
 }
 
-// Obsługa powrotu do aplikacji (Visibility API)
-document.addEventListener('visibilitychange', () => {
+// Obsługa powrotu do aplikacji i stabilności
+document.addEventListener('visibilitychange', async () => {
   if (document.visibilityState === 'visible') {
     console.log('App visible - refreshing data and subscriptions...');
     if (currentUser) {
       refreshData();
-      setupSubscriptions(); // Odśwież połączenie WebSocket
+      setupSubscriptions();
+      requestWakeLock(); // Ponów prośbę o niegaszenie ekranu
     }
   }
 });
+
+// Nasłuchiwanie na powrót do sieci
+window.addEventListener('online', () => {
+  showToast('Połączenie przywrócone!');
+  refreshData();
+  setupSubscriptions();
+});
+
+// Automatyczne odświeżanie sesji co 5 minut dla pewności
+setInterval(() => {
+  if (currentUser) {
+    console.log('Periodic heartbeat/refresh...');
+    refreshData();
+  }
+}, 300000);
 
 init();
