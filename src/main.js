@@ -483,7 +483,10 @@ const init = async () => {
     }
   });
 
-});
+  // Obsługa sesji na starcie
+  const { data: { session } } = await supabase.auth.getSession();
+  handleAuthStateChange(session?.user || null);
+  supabase.auth.onAuthStateChange((_event, session) => handleAuthStateChange(session?.user || null));
 };
 
 // --- Real-time & Visibility ---
