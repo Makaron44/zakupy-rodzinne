@@ -35,9 +35,10 @@
             <section class="input-group">
                 <input type="text" id="quantity-input" class="quantity-input" placeholder="Ile?" value="1"
                     autocomplete="off" />
-                <input type="text" id="item-input" placeholder="Co trzeba kupić?" autocomplete="off" />
+                <input type="text" id="item-input" placeholder="Co trzeba kupić?" autocomplete="off"
+                    style="flex: 2; min-width: 100px;" />
                 <input type="number" id="price-input" class="quantity-input" placeholder="zł" step="0.01"
-                    style="width: 70px;" />
+                    style="width: 70px !important;" />
                 <button class="btn-add btn-rotate" id="add-button" title="Dodaj produkt">
                     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
                         stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
@@ -48,8 +49,8 @@
             </section>
 
             <div id="total-sum-container"
-                style="text-align: right; margin-bottom: 20px; font-weight: 800; font-size: 1.1rem; color: var(--accent); padding-right: 8px; display: none;">
-                Suma: <span id="total-sum-value">0.00</span> zł
+                style="text-align: right; margin-bottom: 20px; font-weight: 800; font-size: 1.1rem; color: var(--accent); padding-right: 8px; display: none; background: rgba(16, 185, 129, 0.1); padding: 8px 12px; border-radius: 12px; border: 1px solid rgba(16, 185, 129, 0.2); width: fit-content; margin-left: auto;">
+                Suma: <span id="total-sum-value" style="color: white;">0.00</span> zł
             </div>
 
             <section id="history-section" style="margin-bottom: 24px; display: none;">
