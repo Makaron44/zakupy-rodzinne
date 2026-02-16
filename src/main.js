@@ -20,6 +20,7 @@ let recentItems = JSON.parse(localStorage.getItem('recentItems') || '[]');
 let realtimeChannel = null;
 let wakeLock = null;
 let lastActiveTime = Date.now();
+let lastPulse = Date.now();
 
 // --- Selectors ---
 const getSelectors = () => ({
@@ -569,10 +570,10 @@ async function handleAppRecovery() {
 
     console.log(`App returned. Was in background for: ${timeInBackground}s`);
 
-    // Jeśli aplikacja była w tle dłużej niż 60 sekund, na iOS lepiej zrobić szybki reload
-    // dla 100% pewności, że stan Supabase i WebSocketów jest czysty.
-    if (timeInBackground > 60) {
-      console.log('Long backgrounding detect - forcing reload for stability.');
+    // Drastycznie obniżony próg dla iPhone'ów: 
+    // Jeśli byłeś poza aplikacją dłużej niż 3 sekundy - świeży start.
+    if (timeInBackground > 3) {
+      console.log('Backgrounding detected - forcing reload for stability.');
       window.location.reload();
       return;
     }
@@ -597,9 +598,18 @@ window.addEventListener('online', () => {
 // Automatyczne odświeżanie sesji co 5 minut dla pewności
 setInterval(() => {
   if (currentUser) {
-    console.log('Periodic heartbeat/refresh...');
     refreshData();
   }
 }, 300000);
+
+// HYPER-RECOVERY: Detekcja zamrożenia procesora (iOS Fix)
+setInterval(() => {
+  const now = Date.now();
+  if (now - lastPulse > 4000) { // Jeśli procesor stanął na więcej niż 4s
+    console.log("Freeze detected - hyper recovering...");
+    window.location.reload();
+  }
+  lastPulse = now;
+}, 1000);
 
 init();
