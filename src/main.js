@@ -17,6 +17,7 @@ let activeTab = 'list';
 let currentUser = null;
 let userFamily = null;
 let recentItems = JSON.parse(localStorage.getItem('recentItems') || '[]');
+let realtimeChannel = null;
 
 // --- Selectors ---
 const getSelectors = () => ({
@@ -121,6 +122,7 @@ async function handleAuthStateChange(user) {
     s.authLoggedIn.style.display = 'block';
     s.userDisplay.innerText = `Konto: ${user.email}`;
     await syncProfile();
+    setupSubscriptions(); // Uruchom subskrypcje po zalogowaniu
     refreshData();
   } else {
     s.authLoggedOut.style.display = 'block';
@@ -130,6 +132,10 @@ async function handleAuthStateChange(user) {
     userFamily = null;
     items = [];
     cards = [];
+    if (realtimeChannel) {
+      realtimeChannel.unsubscribe();
+      realtimeChannel = null;
+    }
     renderItems();
     renderCards();
   }
@@ -477,21 +483,40 @@ const init = async () => {
     }
   });
 
-  // Subscriptions
-  supabase.channel('shopping-realtime')
-    .on('postgres_changes', { event: '*', schema: 'public', table: 'items' }, (payload) => {
-      console.log('Realtime update:', payload);
-      refreshData();
-    })
-    .on('postgres_changes', { event: '*', schema: 'public', table: 'loyalty_cards' }, () => {
-      refreshData();
-    })
-    .subscribe();
-
-  // Session
-  const { data: { session } } = await supabase.auth.getSession();
-  handleAuthStateChange(session?.user || null);
-  supabase.auth.onAuthStateChange((_event, session) => handleAuthStateChange(session?.user || null));
+});
 };
+
+// --- Real-time & Visibility ---
+function setupSubscriptions() {
+  if (!userFamily) return;
+
+  // Cleanup old channel
+  if (realtimeChannel) {
+    realtimeChannel.unsubscribe();
+  }
+
+  realtimeChannel = supabase.channel('shopping-realtime')
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'items', filter: `family_id=eq.${userFamily.id}` }, (payload) => {
+      console.log('Realtime update:', payload);
+      fetchItems();
+    })
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'loyalty_cards', filter: `family_id=eq.${userFamily.id}` }, () => {
+      fetchCards();
+    })
+    .subscribe((status) => {
+      console.log('Realtime status:', status);
+    });
+}
+
+// Obsługa powrotu do aplikacji (Visibility API)
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'visible') {
+    console.log('App visible - refreshing data and subscriptions...');
+    if (currentUser) {
+      refreshData();
+      setupSubscriptions(); // Odśwież połączenie WebSocket
+    }
+  }
+});
 
 init();
