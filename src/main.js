@@ -19,6 +19,7 @@ let userFamily = null;
 let recentItems = JSON.parse(localStorage.getItem('recentItems') || '[]');
 let realtimeChannel = null;
 let wakeLock = null;
+let lastActiveTime = Date.now();
 
 // --- Selectors ---
 const getSelectors = () => ({
@@ -558,16 +559,33 @@ function setupSubscriptions() {
 }
 
 // Obsługa powrotu do aplikacji i stabilności
-document.addEventListener('visibilitychange', async () => {
+document.addEventListener('visibilitychange', handleAppRecovery);
+window.addEventListener('pageshow', handleAppRecovery); // iOS specyficzne
+
+async function handleAppRecovery() {
   if (document.visibilityState === 'visible') {
-    console.log('App visible - refreshing data and subscriptions...');
+    const now = Date.now();
+    const timeInBackground = (now - lastActiveTime) / 1000;
+
+    console.log(`App returned. Was in background for: ${timeInBackground}s`);
+
+    // Jeśli aplikacja była w tle dłużej niż 60 sekund, na iOS lepiej zrobić szybki reload
+    // dla 100% pewności, że stan Supabase i WebSocketów jest czysty.
+    if (timeInBackground > 60) {
+      console.log('Long backgrounding detect - forcing reload for stability.');
+      window.location.reload();
+      return;
+    }
+
     if (currentUser) {
       refreshData();
       setupSubscriptions();
-      requestWakeLock(); // Ponów prośbę o niegaszenie ekranu
+      requestWakeLock();
     }
+  } else {
+    lastActiveTime = Date.now();
   }
-});
+}
 
 // Nasłuchiwanie na powrót do sieci
 window.addEventListener('online', () => {
