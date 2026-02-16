@@ -1,7 +1,11 @@
 import { createClient } from '@supabase/supabase-js'
 
-// Replace with your actual Supabase URL and Anon Key
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'YOUR_SUPABASE_URL'
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'YOUR_SUPABASE_ANON_KEY'
+// Pobranie kluczy z zmiennych środowiskowych (Vite)
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey)
+if (!supabaseUrl || !supabaseUrl.startsWith('http')) {
+    console.error('Supabase URL jest nieprawidłowy lub brakujący! Sprawdź Secrets w GitHub.')
+}
+
+export const supabase = createClient(supabaseUrl || 'https://placeholder.supabase.co', supabaseAnonKey || 'placeholder')
