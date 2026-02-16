@@ -70,14 +70,23 @@ header p {
 
 .input-group {
   display: flex;
-  gap: 12px;
+  gap: 8px;
   margin-bottom: 24px;
   animation: slideUp 0.6s ease-out 0.2s both;
+  flex-wrap: wrap;
+  /* Pozwala na zawijanie na bardzo małych ekranach */
+}
+
+@media (max-width: 400px) {
+  .input-group {
+    gap: 6px;
+  }
 }
 
 input[type="text"],
 input[type="password"],
-input[type="email"] {
+input[type="email"],
+input[type="number"] {
   background: rgba(255, 255, 255, 0.05);
   border: 1px solid var(--glass-border);
   border-radius: 16px;
