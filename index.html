@@ -54,8 +54,12 @@
             </div>
 
             <section id="history-section" style="margin-bottom: 24px; display: none;">
-                <p style="font-size: 0.75rem; color: var(--text-muted); margin-bottom: 8px; margin-left: 8px;">Szybkie
-                    dodawanie:</p>
+                <div
+                    style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; margin-left: 8px;">
+                    <p style="font-size: 0.75rem; color: var(--text-muted);">Szybkie dodawanie:</p>
+                    <button id="btn-clear-history"
+                        style="background: transparent; border: none; font-size: 0.7rem; color: var(--text-muted); cursor: pointer; text-decoration: underline;">Wyczyść</button>
+                </div>
                 <div id="history-chips" style="display: flex; gap: 8px; flex-wrap: wrap;">
                     <!-- Pigułki historii dodawane dynamicznie -->
                 </div>

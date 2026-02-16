@@ -62,6 +62,7 @@ const getSelectors = () => ({
   totalSumContainer: document.getElementById('total-sum-container'),
   totalSumValue: document.getElementById('total-sum-value'),
   btnAtStore: document.getElementById('btn-at-store'),
+  btnClearHistory: document.getElementById('btn-clear-history'),
 });
 
 // --- Utils ---
@@ -407,6 +408,15 @@ const init = async () => {
       payload: { user: currentUser.email.split('@')[0], message: 'jest właśnie w sklepie!' }
     });
     showToast('Powiadomiono rodzinę! 🔔');
+  });
+
+  s.btnClearHistory.addEventListener('click', () => {
+    if (confirm('Czy na pewno wyczyścić historię szybkich zakupów?')) {
+      recentItems = [];
+      localStorage.removeItem('recentItems');
+      renderHistory();
+      showToast('Historia wyczyszczona');
+    }
   });
 
   s.btnSignup.addEventListener('click', async () => {
