@@ -55,6 +55,10 @@ const getSelectors = () => ({
   basketSection: document.getElementById('basket-section'),
   basketContainer: document.getElementById('basket-container'),
   btnClearBasket: document.getElementById('btn-clear-basket'),
+  priceInput: document.getElementById('price-input'),
+  totalSumContainer: document.getElementById('total-sum-container'),
+  totalSumValue: document.getElementById('total-sum-value'),
+  btnAtStore: document.getElementById('btn-at-store'),
 });
 
 // --- Utils ---
@@ -250,6 +254,15 @@ function renderItems() {
   } else {
     s.basketSection.style.display = 'none';
   }
+
+  // Calculate Total Sum (Active Items)
+  const total = activeItems.reduce((sum, item) => sum + (parseFloat(item.price) || 0), 0);
+  if (total > 0) {
+    s.totalSumContainer.style.display = 'block';
+    s.totalSumValue.innerText = total.toFixed(2);
+  } else {
+    s.totalSumContainer.style.display = 'none';
+  }
 }
 
 function createItemElement(item) {
@@ -262,6 +275,7 @@ function createItemElement(item) {
         <div class="item-meta">
             <span class="item-quantity">${item.quantity || '1'}</span>
             <span class="item-text">${item.text}</span>
+            ${item.price ? `<span class="item-category" style="margin-left:auto; background:var(--accent); color:white;">${parseFloat(item.price).toFixed(2)} zł</span>` : ''}
         </div>
         <button class="btn-delete" data-id="${item.id}">
             <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
@@ -366,17 +380,29 @@ const init = async () => {
     if (!userFamily) return showToast('Musisz być w rodzinie!', 'var(--error)');
     const text = s.itemInput.value.trim();
     const quantity = s.quantityInput.value.trim() || '1';
+    const price = parseFloat(s.priceInput.value) || null;
     if (text) {
       addToRecent(text); // Zapamiętaj w historii
       const category = autoSuggestCategory(text);
-      const { error } = await supabase.from('items').insert([{ text, category, quantity, family_id: userFamily.id }]);
+      const { error } = await supabase.from('items').insert([{ text, category, quantity, price, family_id: userFamily.id }]);
       if (error) showToast('Błąd zapisu!', 'var(--error)');
       else {
         s.itemInput.value = '';
         s.quantityInput.value = '1';
+        s.priceInput.value = '';
         refreshData();
       }
     }
+  });
+
+  s.btnAtStore.addEventListener('click', async () => {
+    if (!userFamily || !realtimeChannel) return;
+    realtimeChannel.send({
+      type: 'broadcast',
+      event: 'shopping_status',
+      payload: { user: currentUser.email.split('@')[0], message: 'jest właśnie w sklepie!' }
+    });
+    showToast('Powiadomiono rodzinę! 🔔');
   });
 
   s.btnSignup.addEventListener('click', async () => {
@@ -505,6 +531,9 @@ function setupSubscriptions() {
     })
     .on('postgres_changes', { event: '*', schema: 'public', table: 'loyalty_cards', filter: `family_id=eq.${userFamily.id}` }, () => {
       fetchCards();
+    })
+    .on('broadcast', { event: 'shopping_status' }, ({ payload }) => {
+      showToast(`🛒 ${payload.user} ${payload.message}`, 'var(--accent)');
     })
     .subscribe((status) => {
       console.log('Realtime status:', status);

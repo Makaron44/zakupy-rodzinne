@@ -20,14 +20,24 @@
     <div class="container">
         <!-- Widok Listy Zakupów -->
         <main id="tab-list" class="tab-content active">
-            <header>
+            <header style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
                 <h1>Zakupy</h1>
+                <button id="btn-at-store" class="btn-rotate" title="Jestem w sklepie!"
+                    style="background: var(--accent); width: 44px; height: 44px; border-radius: 50%; display: flex; align-items: center; justify-content: center; position: relative;">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+                        <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+                    </svg>
+                </button>
             </header>
 
             <section class="input-group">
                 <input type="text" id="quantity-input" class="quantity-input" placeholder="Ile?" value="1"
                     autocomplete="off" />
                 <input type="text" id="item-input" placeholder="Co trzeba kupić?" autocomplete="off" />
+                <input type="number" id="price-input" class="quantity-input" placeholder="zł" step="0.01"
+                    style="width: 70px;" />
                 <button class="btn-add btn-rotate" id="add-button" title="Dodaj produkt">
                     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
                         stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
@@ -36,6 +46,11 @@
                     </svg>
                 </button>
             </section>
+
+            <div id="total-sum-container"
+                style="text-align: right; margin-bottom: 20px; font-weight: 800; font-size: 1.1rem; color: var(--accent); padding-right: 8px; display: none;">
+                Suma: <span id="total-sum-value">0.00</span> zł
+            </div>
 
             <section id="history-section" style="margin-bottom: 24px; display: none;">
                 <p style="font-size: 0.75rem; color: var(--text-muted); margin-bottom: 8px; margin-left: 8px;">Szybkie
