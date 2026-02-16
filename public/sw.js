@@ -1,10 +1,10 @@
 const CACHE_NAME = 'zakupy-v1';
 const ASSETS = [
-    '/',
-    '/index.html',
-    '/src/main.js',
-    '/src/style.css',
-    '/manifest.json'
+    './',
+    'index.html',
+    'src/main.js',
+    'src/style.css',
+    'manifest.json'
 ];
 
 self.addEventListener('install', (event) => {
